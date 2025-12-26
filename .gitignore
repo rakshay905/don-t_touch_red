@@ -1,0 +1,9 @@
+*.apk
+*.aab
+.DS_Store
+
+Temp
+Logs
+
+UserSettings
+Library
