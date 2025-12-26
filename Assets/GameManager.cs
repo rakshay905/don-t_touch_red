@@ -37,8 +37,20 @@ public class GameManager : MonoBehaviour
 
     public GameObject pauseButton;
 
+    public GameObject timerBG;
     public RectTransform timerFill;
 
+    int tapScoreMultiplier = 1;
+
+    enum SplitMode
+    {
+        Vertical,
+        Horizontal
+    }
+
+    SplitMode currentSplitMode;
+
+    public int horizontalUnlockScore = 50;
 
     void Awake()
     {
@@ -47,45 +59,8 @@ public class GameManager : MonoBehaviour
         highScore = PlayerPrefs.GetInt("HIGH_SCORE", 0);
     }
 
-    // void Update()
-    // {
-    //     if (!gameRunning) return;
-
-    //     score += Time.deltaTime;
-    //     scoreText.text = "Score: " + Mathf.FloorToInt(score);
-    // }
-
-    // void Update()
-    // {
-    //     if (!gameRunning) return;
-
-    //     tapTimer += Time.deltaTime;
-
-    //     // player is too slow
-    //     if (tapTimer >= tapLimit)
-    //     {
-    //         GameOver();
-    //         return;
-    //     }
-
-    //     scoreText.text = "Score: " + Mathf.FloorToInt(score);
-    // }
-
-    // void Update()
-    // {
-    //     if (!gameRunning) return;
-
-    //     tapTimer += Time.deltaTime;
-
-    //     if (tapTimer >= tapLimit)
-    //     {
-    //         GameOver(); // player too slow
-    //     }
-    // }
-
     void Update()
     {
-        // if (!gameRunning) return;
         if (!gameRunning || isPaused) return;
 
         tapTimer += Time.deltaTime;
@@ -98,51 +73,16 @@ public class GameManager : MonoBehaviour
         }
     }
 
-
-    // public void StartGame()
-    // {
-    //     score = 0;
-    //     gameRunning = true;
-    //     startPanel.SetActive(false);
-    //     gameOverPanel.SetActive(false);
-    // }
-
-    // public void StartGame()
-    // {
-    //     gameRunning = true;
-
-    //     score = 0;
-    //     tapTimer = 0f;
-    //     tapLimit = 1.2f;   // reset difficulty
-
-    //     scoreText.text = "Score: 0";
-
-    //     startPanel.SetActive(false);
-    //     gameOverPanel.SetActive(false);
-    // }
-
-    // public void StartGame()
-    // {
-    //     gameRunning = true;
-
-    //     score = 0;
-    //     tapTimer = 0f;
-    //     tapLimit = 1f;
-
-    //     scoreText.text = "Score: 0";
-
-    //     startPanel.SetActive(false);
-    //     gameOverPanel.SetActive(false);
-
-    //     RandomizeZones();
-    // }
-
     public void StartGame()
     {
         gameRunning = true;
 
+        tapScoreMultiplier = 1; // reset upgrade
+
         score = 0;
         tapTimer = 0f;
+
+        timerBG.SetActive(true);
         UpdateTimerBar();
 
         currentTapLimit = startTapLimit;
@@ -158,9 +98,6 @@ public class GameManager : MonoBehaviour
 
         RandomizeZones();
     }
-
-
-
 
     public void GameOver()
     {
@@ -179,6 +116,9 @@ public class GameManager : MonoBehaviour
         gameOverPanel.SetActive(true);
 
         pauseButton.SetActive(false);  // ❌ HIDE pause
+        timerBG.SetActive(false);
+
+        AdsManager.Instance.ShowInterstitial();
     }
 
     public void SafeTap()
@@ -207,21 +147,6 @@ public class GameManager : MonoBehaviour
         return gameRunning;
     }
 
-    // public void OnSafeTap()
-    // {
-    //     if (!gameRunning) return;
-
-    //     score++;
-    //     scoreText.text = "Score: " + score;
-
-    //     tapTimer = 0f;
-
-    //     // increase difficulty
-    //     tapLimit = Mathf.Max(0.4f, tapLimit - 0.03f);
-
-    //     RandomizeZones();
-    // }
-
     public void OnSafeTap()
     {
         if (!gameRunning) return;
@@ -229,7 +154,8 @@ public class GameManager : MonoBehaviour
         tapTimer = 0f;
         // UpdateTimerBar();
 
-        score++;
+        // score++;
+        score += tapScoreMultiplier;
         scoreText.text = "Score: " + score;
 
         if (score > highScore)
@@ -248,45 +174,62 @@ public class GameManager : MonoBehaviour
         RandomizeZones();
     }
 
-
-    // void RandomizeZones()
-    // {
-    //     bool redOnLeft = Random.value > 0.5f;
-
-    //     if (redOnLeft)
-    //     {
-    //         redZone.anchoredPosition = new Vector2(-Screen.width / 4f, 0);
-    //         safeZone.anchoredPosition = new Vector2(Screen.width / 4f, 0);
-    //     }
-    //     else
-    //     {
-    //         redZone.anchoredPosition = new Vector2(Screen.width / 4f, 0);
-    //         safeZone.anchoredPosition = new Vector2(-Screen.width / 4f, 0);
-    //     }
-    // }
-
     void RandomizeZones()
     {
-        bool redOnLeft = Random.value > 0.5f;
-
-        // place red zone
-        SetZoneSide(redZone, redOnLeft);
-        // place safe zone on opposite side
-        SetZoneSide(safeZone, !redOnLeft);
-    }
-
-
-    void SetZoneSide(RectTransform zone, bool leftSide)
-    {
-        if (leftSide)
+        // Before score 50 → ONLY vertical
+        if (score < horizontalUnlockScore)
         {
-            zone.anchorMin = new Vector2(0f, 0f);
-            zone.anchorMax = new Vector2(0.5f, 1f);
+            Debug.Log("HORIZONTAL MODE UNLOCKED!");
+            currentSplitMode = SplitMode.Vertical;
         }
         else
         {
-            zone.anchorMin = new Vector2(0.5f, 0f);
-            zone.anchorMax = new Vector2(1f, 1f);
+            // After score 50 → vertical OR horizontal
+            currentSplitMode = (Random.value > 0.5f)
+                ? SplitMode.Vertical
+                : SplitMode.Horizontal;
+        }
+
+        // Randomly decide which side is SAFE
+        bool safeOnPrimarySide = Random.value > 0.5f;
+
+        SetZoneSide(safeZone, safeOnPrimarySide);
+        SetZoneSide(redZone, !safeOnPrimarySide);
+    }
+
+    void SetZoneSide(RectTransform zone, bool isPrimarySide)
+    {
+        if (currentSplitMode == SplitMode.Vertical)
+        {
+            // LEFT / RIGHT
+            if (isPrimarySide)
+            {
+                // LEFT
+                zone.anchorMin = new Vector2(0f, 0f);
+                zone.anchorMax = new Vector2(0.5f, 1f);
+            }
+            else
+            {
+                // RIGHT
+                zone.anchorMin = new Vector2(0.5f, 0f);
+                zone.anchorMax = new Vector2(1f, 1f);
+            }
+        }
+        else
+        {
+            // 🔥 HORIZONTAL (TOP / BOTTOM)
+            if (isPrimarySide)
+            {
+                // TOP
+                zone.anchorMin = new Vector2(0f, 0.5f);
+                zone.anchorMax = new Vector2(1f, 1f);
+            }
+            else
+            {
+                // BOTTOM
+                zone.anchorMin = new Vector2(0f, 0f);
+                zone.anchorMax = new Vector2(1f, 0.5f);
+            }
         }
 
         zone.offsetMin = Vector2.zero;
@@ -335,6 +278,7 @@ public class GameManager : MonoBehaviour
         pausePanel.SetActive(true);
 
         pauseButton.SetActive(false);  // ❌ HIDE pause
+        timerBG.SetActive(false);
     }
 
     public void ResumeGame()
@@ -343,6 +287,7 @@ public class GameManager : MonoBehaviour
         pausePanel.SetActive(false);
 
         pauseButton.SetActive(true);   // ✅ SHOW pause
+        timerBG.SetActive(true);
     }
 
     public void QuitGame()
@@ -355,6 +300,7 @@ public class GameManager : MonoBehaviour
         pauseButton.SetActive(false);  // ❌ HIDE pause
 
         startPanel.SetActive(true);
+        timerBG.SetActive(false);
     }
 
     void UpdateTimerBar()
@@ -374,6 +320,16 @@ public class GameManager : MonoBehaviour
             img.color = Color.red;
     }
 
+    public void ActivateScoreUpgrade()
+    {
+        tapScoreMultiplier = 2;
+        Debug.Log("Rewarded upgrade activated: +1 extra score per tap");
+    }
 
+    public void DebugUpgrade()
+    {
+        // TEMP – simulate rewarded ad success
+        ActivateScoreUpgrade();
+    }
 
 }
