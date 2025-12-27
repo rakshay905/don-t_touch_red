@@ -9,9 +9,9 @@ public class AdsManager : MonoBehaviour
     // ==================================================
     // 🔴 TEST AD IDS (REPLACE WITH REAL ON RELEASE)
     // ==================================================
-    private const string BANNER_ID = "ca-app-pub-3940256099942544/6300978111";
-    private const string INTERSTITIAL_ID = "ca-app-pub-3940256099942544/1033173712";
-    private const string REWARDED_ID = "ca-app-pub-3940256099942544/5224354917";
+    private const string BANNER_ID = "ca-app-pub-4847526487101723/2714739692";
+    private const string INTERSTITIAL_ID = "ca-app-pub-4847526487101723/8468084662";
+    private const string REWARDED_ID = "ca-app-pub-4847526487101723/3694447745";
 
     BannerView bannerView;
     InterstitialAd interstitialAd;
@@ -177,7 +177,10 @@ public class AdsManager : MonoBehaviour
             rewardedAd.Show(reward =>
             {
                 rewardGranted = true;
-                // GameManager.Instance.ActivateScoreUpgrade();
+                MainThreadDispatcher.RunOnMainThread(() =>
+                {
+                    GameManager.Instance.ActivateScoreUpgrade();
+                });
             });
 
             // Ad closed callback
@@ -189,7 +192,10 @@ public class AdsManager : MonoBehaviour
                 // Show success ONLY if reward was earned
                 if (rewardGranted)
                 {
-                    // GameManager.Instance.ShowRewardSuccess();
+                    MainThreadDispatcher.RunOnMainThread(() =>
+                    {
+                        GameManager.Instance.ShowRewardSuccess();
+                    });
                 }
 
                 // Preload next ad
