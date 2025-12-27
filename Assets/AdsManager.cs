@@ -177,19 +177,19 @@ public class AdsManager : MonoBehaviour
             rewardedAd.Show(reward =>
             {
                 rewardGranted = true;
-                GameManager.Instance.ActivateScoreUpgrade();
+                // GameManager.Instance.ActivateScoreUpgrade();
             });
 
             // Ad closed callback
             rewardedAd.OnAdFullScreenContentClosed += () =>
             {
                 // Return to pause panel UI
-                GameManager.Instance.PauseGame();
+                // GameManager.Instance.PauseGame();
 
                 // Show success ONLY if reward was earned
                 if (rewardGranted)
                 {
-                    GameManager.Instance.ShowRewardSuccess();
+                    // GameManager.Instance.ShowRewardSuccess();
                 }
 
                 // Preload next ad
