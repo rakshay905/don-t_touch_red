@@ -144,25 +144,63 @@ public class AdsManager : MonoBehaviour
     //     }
     // }
 
+    // public void ShowRewarded()
+    // {
+    //     if (rewardedAd != null && rewardedAd.CanShowAd())
+    //     {
+    //         rewardedAd.Show(reward =>
+    //         {
+    //             // ✅ THIS IS CALLED ONLY IF REWARD IS GRANTED
+    //             Debug.Log("Reward granted by AdMob");
+
+    //             GameManager.Instance.ActivateScoreUpgrade();
+    //         });
+
+    //         // Preload next rewarded ad
+    //         LoadRewarded();
+    //     }
+    //     else
+    //     {
+    //         Debug.Log("Rewarded ad not ready");
+    //     }
+    // }
+
+    bool rewardGranted = false;
+
     public void ShowRewarded()
     {
         if (rewardedAd != null && rewardedAd.CanShowAd())
         {
+            rewardGranted = false;
+
+            // Reward callback
             rewardedAd.Show(reward =>
             {
-                // ✅ THIS IS CALLED ONLY IF REWARD IS GRANTED
-                Debug.Log("Reward granted by AdMob");
-
+                rewardGranted = true;
                 GameManager.Instance.ActivateScoreUpgrade();
             });
 
-            // Preload next rewarded ad
-            LoadRewarded();
+            // Ad closed callback
+            rewardedAd.OnAdFullScreenContentClosed += () =>
+            {
+                // Return to pause panel UI
+                GameManager.Instance.PauseGame();
+
+                // Show success ONLY if reward was earned
+                if (rewardGranted)
+                {
+                    GameManager.Instance.ShowRewardSuccess();
+                }
+
+                // Preload next ad
+                LoadRewarded();
+            };
         }
         else
         {
             Debug.Log("Rewarded ad not ready");
         }
     }
+
 
 }

@@ -33,6 +33,14 @@ public class GameManager : MonoBehaviour
 
     bool isPaused;
 
+    bool isHorizontalShown;
+    bool is20LevelShown;
+    bool is40LevelShown;
+    bool is80LevelShown;
+    bool is200LevelShown;
+    bool is400LevelShown;
+    bool is900LevelShown;
+
     public GameObject pausePanel;
 
     public GameObject pauseButton;
@@ -52,6 +60,13 @@ public class GameManager : MonoBehaviour
 
     public int horizontalUnlockScore = 50;
 
+    public GameObject rewardSuccessText;
+
+    public GameObject levelTextObj;
+    public TextMeshProUGUI levelText;
+
+    public TextMeshProUGUI safeHintText;
+
     void Awake()
     {
         Instance = this;
@@ -66,6 +81,7 @@ public class GameManager : MonoBehaviour
         tapTimer += Time.deltaTime;
 
         UpdateTimerBar();
+        UpdateSafeZoneCountdown();
 
         if (tapTimer >= currentTapLimit)
         {
@@ -75,6 +91,14 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
+        isHorizontalShown = false;
+        is900LevelShown = false;
+        is400LevelShown = false;
+        is200LevelShown = false;
+        is80LevelShown = false;
+        is40LevelShown = false;
+        is20LevelShown = false;
+
         gameRunning = true;
 
         tapScoreMultiplier = 1; // reset upgrade
@@ -88,6 +112,7 @@ public class GameManager : MonoBehaviour
         currentTapLimit = startTapLimit;
 
         scoreText.text = "Score: 0";
+        levelText.text = "Level";
 
         startPanel.SetActive(false);
         gameOverPanel.SetActive(false);
@@ -95,6 +120,10 @@ public class GameManager : MonoBehaviour
         highScoreText.text = "Best: " + FormatScore(highScore);
 
         pauseButton.SetActive(true); 
+        rewardSuccessText.SetActive(false);
+
+        safeHintText.gameObject.SetActive(true);
+        UpdateSafeZoneCountdown();
 
         RandomizeZones();
     }
@@ -117,6 +146,8 @@ public class GameManager : MonoBehaviour
 
         pauseButton.SetActive(false);  // ❌ HIDE pause
         timerBG.SetActive(false);
+
+        safeHintText.gameObject.SetActive(false);
 
         AdsManager.Instance.ShowInterstitial();
     }
@@ -152,6 +183,7 @@ public class GameManager : MonoBehaviour
         if (!gameRunning) return;
 
         tapTimer = 0f;
+        UpdateSafeZoneCountdown();
         // UpdateTimerBar();
 
         // score++;
@@ -179,12 +211,17 @@ public class GameManager : MonoBehaviour
         // Before score 50 → ONLY vertical
         if (score < horizontalUnlockScore)
         {
-            Debug.Log("HORIZONTAL MODE UNLOCKED!");
             currentSplitMode = SplitMode.Vertical;
         }
         else
         {
             // After score 50 → vertical OR horizontal
+            if (!isHorizontalShown) {
+                isHorizontalShown = true;
+                levelText.text = "HORIZONTAL MODE UNLOCKED!"; 
+                levelTextObj.SetActive(true);
+                Invoke(nameof(HideLevelText), 2f);
+            }
             currentSplitMode = (Random.value > 0.5f)
                 ? SplitMode.Vertical
                 : SplitMode.Horizontal;
@@ -242,18 +279,89 @@ public class GameManager : MonoBehaviour
         // Example: after 0 score → 10s
         // after 20 score → ~2s
 
-        // Special hard mode after score 100
-        if (score >= 100)
+        if (score >= 20 && score < 40) {
+            currentTapLimit = 9f; // force 1.5 second
+            if (!is20LevelShown) {
+                is20LevelShown = true;
+
+                levelText.text = "Tap Timer Set To 9 Seconds!"; 
+                levelTextObj.SetActive(true);
+                Invoke(nameof(HideLevelText), 2f);
+            }
+            return;
+        }
+        if (score >= 40 && score < 80)
         {
-            currentTapLimit = 1f; // force 1 second
+            currentTapLimit = 7.5f; // force 1.5 second
+            if (!is40LevelShown) {
+                is40LevelShown = true;
+
+                levelText.text = "Tap Timer Set To 7.5 Seconds!"; 
+                levelTextObj.SetActive(true);
+                Invoke(nameof(HideLevelText), 2f);
+            }
+            return;
+        }
+        // Special hard mode after score 100
+        if (score >= 80 && score < 200)
+        {
+            currentTapLimit = 5f; // force 1.5 second
+            if (!is80LevelShown) {
+                is80LevelShown = true;
+
+                levelText.text = "Tap Timer Set To 5 Seconds!"; 
+                levelTextObj.SetActive(true);
+                Invoke(nameof(HideLevelText), 2f);
+            }
             return;
         }
 
-        float reductionPerPoint = (startTapLimit - minTapLimit) / 20f;
+        if (score >= 200 && score < 400)
+        {
+            currentTapLimit = 2.5f; // force 2.5 second
+            if (!is200LevelShown) {
+                is200LevelShown = true;
 
-        currentTapLimit = startTapLimit - (score * reductionPerPoint);
+                levelText.text = "Tap Timer Set To 2.5 Seconds!"; 
+                levelTextObj.SetActive(true);
+                Invoke(nameof(HideLevelText), 2f);
+            }
+            return;
+        }
 
-        currentTapLimit = Mathf.Clamp(currentTapLimit, minTapLimit, startTapLimit);
+        if (score >= 400 && score < 900)
+        {
+            currentTapLimit = 1f; // force 1 second
+
+            if (!is400LevelShown) {
+                is400LevelShown = true;
+                levelText.text = "Tap Timer Set To 1 Seconds!"; 
+                levelTextObj.SetActive(true);
+                Invoke(nameof(HideLevelText), 2f);
+            }
+            return;
+        }
+
+        if (score >= 900)
+        {
+            if (!is900LevelShown) {
+                is900LevelShown = true;
+
+                levelText.text = "Tap Timer Set To 0.5 Seconds!"; 
+                levelTextObj.SetActive(true);
+                Invoke(nameof(HideLevelText), 2f);
+            }
+            currentTapLimit = 0.5f; // force 0.5 second
+            return;
+        }
+
+        // float reductionPerPoint = (startTapLimit - minTapLimit) / 20f;
+
+        // currentTapLimit = startTapLimit - (score * reductionPerPoint);
+
+        // currentTapLimit = Mathf.Clamp(currentTapLimit, minTapLimit, startTapLimit);
+
+        currentTapLimit = startTapLimit;
 
         Debug.Log("Current Tap Time: " + currentTapLimit);
     }
@@ -275,10 +383,12 @@ public class GameManager : MonoBehaviour
         if (!gameRunning) return;
 
         isPaused = true;
+        safeHintText.text = "PAUSED";
         pausePanel.SetActive(true);
 
         pauseButton.SetActive(false);  // ❌ HIDE pause
         timerBG.SetActive(false);
+        rewardSuccessText.SetActive(false);
     }
 
     public void ResumeGame()
@@ -288,6 +398,9 @@ public class GameManager : MonoBehaviour
 
         pauseButton.SetActive(true);   // ✅ SHOW pause
         timerBG.SetActive(true);
+
+        safeHintText.gameObject.SetActive(true);
+        UpdateSafeZoneCountdown();
     }
 
     public void QuitGame()
@@ -331,5 +444,30 @@ public class GameManager : MonoBehaviour
         // TEMP – simulate rewarded ad success
         ActivateScoreUpgrade();
     }
+
+    public void ShowRewardSuccess()
+    {
+        rewardSuccessText.SetActive(true);
+        Invoke(nameof(HideRewardSuccess), 2f);
+    }
+
+    void HideRewardSuccess()
+    {
+        rewardSuccessText.SetActive(false);
+    }
+
+    void HideLevelText()
+    {
+        levelTextObj.SetActive(false);
+    }
+
+    void UpdateSafeZoneCountdown()
+    {
+        float remainingTime = Mathf.Max(0f, currentTapLimit - tapTimer);
+
+        // Show 1 decimal for speed feel
+        safeHintText.text = $"TOUCH HERE\n{remainingTime:0.0}s";
+    }
+
 
 }
