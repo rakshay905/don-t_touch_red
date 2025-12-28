@@ -83,6 +83,14 @@ public class GameManager : MonoBehaviour
 
     bool isCenterModeShown;
 
+    enum LevelMessageType
+    {
+        Info,
+        Speed,
+        Unlock,
+        Warning
+    }
+
     void Awake()
     {
         Instance = this;
@@ -273,9 +281,10 @@ public class GameManager : MonoBehaviour
             if (!isHorizontalShown)
             {
                 isHorizontalShown = true;
-                levelText.text = "HORIZONTAL MODE UNLOCKED!";
-                levelTextObj.SetActive(true);
-                Invoke(nameof(HideLevelText), 2f);
+                // levelText.text = "HORIZONTAL MODE UNLOCKED!";
+                // levelTextObj.SetActive(true);
+                // Invoke(nameof(HideLevelText), 2f);
+                ShowLevelMessage("HORIZONTAL MODE UNLOCKED!", LevelMessageType.Unlock);
             }
 
             currentSplitMode = (Random.value > 0.5f)
@@ -297,9 +306,10 @@ public class GameManager : MonoBehaviour
             {
                 isCenterModeShown = true;
 
-                levelText.text = "CENTER ZONE MODE UNLOCKED!";
-                levelTextObj.SetActive(true);
-                Invoke(nameof(HideLevelText), 2f);
+                // levelText.text = "CENTER ZONE MODE UNLOCKED!";
+                // levelTextObj.SetActive(true);
+                // Invoke(nameof(HideLevelText), 2f);
+                ShowLevelMessage("CENTER ZONE MODE UNLOCKED!", LevelMessageType.Unlock);
             }
 
             int rand = Random.Range(0, 100);
@@ -390,9 +400,10 @@ public class GameManager : MonoBehaviour
             if (!is20LevelShown) {
                 is20LevelShown = true;
 
-                levelText.text = "Tap Timer Set To 9 Seconds!"; 
-                levelTextObj.SetActive(true);
-                Invoke(nameof(HideLevelText), 2f);
+                // levelText.text = "Tap Timer Set To 9 Seconds!"; 
+                // levelTextObj.SetActive(true);
+                // Invoke(nameof(HideLevelText), 2f);
+                ShowLevelMessage("TAP TIMER: 9 SECONDS", LevelMessageType.Speed);
             }
             return;
         }
@@ -402,9 +413,10 @@ public class GameManager : MonoBehaviour
             if (!is40LevelShown) {
                 is40LevelShown = true;
 
-                levelText.text = "Tap Timer Set To 7.5 Seconds!"; 
-                levelTextObj.SetActive(true);
-                Invoke(nameof(HideLevelText), 2f);
+                // levelText.text = "Tap Timer Set To 7.5 Seconds!"; 
+                // levelTextObj.SetActive(true);
+                // Invoke(nameof(HideLevelText), 2f);
+                ShowLevelMessage("TAP TIMER: 7.5 SECONDS", LevelMessageType.Speed);
             }
             return;
         }
@@ -415,9 +427,10 @@ public class GameManager : MonoBehaviour
             if (!is80LevelShown) {
                 is80LevelShown = true;
 
-                levelText.text = "Tap Timer Set To 5 Seconds!"; 
-                levelTextObj.SetActive(true);
-                Invoke(nameof(HideLevelText), 2f);
+                // levelText.text = "Tap Timer Set To 5 Seconds!"; 
+                // levelTextObj.SetActive(true);
+                // Invoke(nameof(HideLevelText), 2f);
+                ShowLevelMessage("TAP TIMER: 5 SECONDS", LevelMessageType.Speed);
             }
             return;
         }
@@ -428,9 +441,10 @@ public class GameManager : MonoBehaviour
             if (!is200LevelShown) {
                 is200LevelShown = true;
 
-                levelText.text = "Tap Timer Set To 2.5 Seconds!"; 
-                levelTextObj.SetActive(true);
-                Invoke(nameof(HideLevelText), 2f);
+                // levelText.text = "Tap Timer Set To 2.5 Seconds!"; 
+                // levelTextObj.SetActive(true);
+                // Invoke(nameof(HideLevelText), 2f);
+                ShowLevelMessage("TAP TIMER: 2.5 SECONDS", LevelMessageType.Speed);
             }
             return;
         }
@@ -441,9 +455,10 @@ public class GameManager : MonoBehaviour
 
             if (!is400LevelShown) {
                 is400LevelShown = true;
-                levelText.text = "Tap Timer Set To 1 Seconds!"; 
-                levelTextObj.SetActive(true);
-                Invoke(nameof(HideLevelText), 2f);
+                // levelText.text = "Tap Timer Set To 1 Seconds!"; 
+                // levelTextObj.SetActive(true);
+                // Invoke(nameof(HideLevelText), 2f);
+                ShowLevelMessage("TAP TIMER: 1 SECONDS", LevelMessageType.Speed);
             }
             return;
         }
@@ -701,5 +716,41 @@ public class GameManager : MonoBehaviour
         // IMPORTANT: Do NOT reset score, layout, or difficulty
     }
 
+    public Image levelBG;
+
+    void ShowLevelMessage(string message, LevelMessageType type)
+    {
+        Debug.Log("ShowLevelMessage CALLED");
+        levelText.text = message;
+
+        levelTextObj.SetActive(true);
+
+        switch (type)
+        {
+            case LevelMessageType.Info:
+                levelText.color = Color.white;
+                levelBG.color = new Color(0, 0, 0, 0.7f);
+                break;
+
+            case LevelMessageType.Speed:
+                levelText.color = Color.yellow;
+                levelBG.color = new Color(0.1f, 0.1f, 0.1f, 0.85f);
+                break;
+
+            case LevelMessageType.Unlock:
+                levelText.color = Color.cyan;
+                levelBG.color = new Color(0f, 0.2f, 0.3f, 0.9f);
+                break;
+
+            case LevelMessageType.Warning:
+                levelText.color = Color.red;
+                levelBG.color = new Color(0.3f, 0f, 0f, 0.9f);
+                break;
+        }
+
+        levelTextObj.SetActive(true);
+        CancelInvoke(nameof(HideLevelText));
+        Invoke(nameof(HideLevelText), 2f);
+    }
 
 }
