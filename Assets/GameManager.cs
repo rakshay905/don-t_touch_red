@@ -71,6 +71,7 @@ public class GameManager : MonoBehaviour
     public int horizontalUnlockScore = 50;
 
     public GameObject rewardSuccessText;
+    public TextMeshProUGUI rewardSuccessTextText;
 
     public GameObject levelTextObj;
     public TextMeshProUGUI levelText;
@@ -115,6 +116,7 @@ public class GameManager : MonoBehaviour
         is80LevelShown = false;
         is40LevelShown = false;
         is20LevelShown = false;
+        isCenterModeShown = false;
 
         gameRunning = true;
 
@@ -255,6 +257,10 @@ public class GameManager : MonoBehaviour
 
     void RandomizeZones()
     {
+        // 🔥 RESET FIRST (THIS FIXES FULL SCREEN ISSUE)
+        ResetRect(safeZone);
+        ResetRect(redZone);
+        
         // -------------------------
         // 1️⃣ Decide split mode
         // -------------------------
@@ -311,19 +317,17 @@ public class GameManager : MonoBehaviour
         // -------------------------
         if (currentLayoutMode == ZoneLayoutMode.Split)
         {
-            // 🔥 RESET FIRST (THIS FIXES FULL SCREEN ISSUE)
-            ResetRect(safeZone);
-            ResetRect(redZone);
 
             bool safeOnPrimarySide = Random.value > 0.5f;
 
-            ResetRect(safeZone);
-            ResetRect(redZone);
+            // ResetRect(safeZone);
+            // ResetRect(redZone);
 
             SetZoneSide(safeZone, safeOnPrimarySide);
             SetZoneSide(redZone, !safeOnPrimarySide);
 
             safeHintText.text = "TOUCH HERE";
+            HintTextCenter();
         }
         else if (currentLayoutMode == ZoneLayoutMode.CenterSafe)
         {
@@ -543,7 +547,7 @@ public class GameManager : MonoBehaviour
 
     public void ActivateScoreUpgrade()
     {
-        tapScoreMultiplier = 2;
+        // tapScoreMultiplier = 2;
         Debug.Log("Rewarded upgrade activated: +1 extra score per tap");
     }
 
@@ -555,6 +559,8 @@ public class GameManager : MonoBehaviour
 
     public void ShowRewardSuccess()
     {
+        tapScoreMultiplier += 1;
+        rewardSuccessTextText.text = $"Upgrade Activated! +{tapScoreMultiplier}";
         rewardSuccessText.SetActive(true);
         Invoke(nameof(HideRewardSuccess), 2f);
     }
@@ -612,9 +618,14 @@ public class GameManager : MonoBehaviour
         redZone.anchorMax = Vector2.one;
 
         // 🔥 IMPORTANT: bring safe on top
-        safeZone.SetAsLastSibling();
+        // safeZone.SetAsLastSibling();
+        safeZone.transform.SetSiblingIndex(
+            safeZone.transform.parent.childCount - 1
+        );
 
         safeHintText.text = "TOUCH CENTER!";
+        HintTextCenter();
+
     }
 
     void ApplyCenterRedLayout()
@@ -632,9 +643,13 @@ public class GameManager : MonoBehaviour
         safeZone.anchorMax = Vector2.one;
 
         // 🔥 IMPORTANT: bring red on top
-        redZone.SetAsLastSibling();
+        // redZone.SetAsLastSibling();
+        redZone.transform.SetSiblingIndex(
+            redZone.transform.parent.childCount - 1
+        );
 
         safeHintText.text = "AVOID CENTER!";
+        HintTextTop();   // 🔥 THIS is what you were missing
     }
 
     void SetZoneRaycast(bool enabled)
@@ -643,5 +658,20 @@ public class GameManager : MonoBehaviour
         redZoneImage.raycastTarget = enabled;
     }
 
+    void HintTextCenter()
+    {
+        RectTransform rt = safeHintText.rectTransform;
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = Vector2.zero;
+    }
+
+    void HintTextTop()
+    {
+        RectTransform rt = safeHintText.rectTransform;
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
+        rt.pivot = new Vector2(0.5f, 1f);
+        rt.anchoredPosition = new Vector2(0f, -250f); // move down from top
+    }
 
 }
