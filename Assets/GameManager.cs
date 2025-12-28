@@ -58,6 +58,16 @@ public class GameManager : MonoBehaviour
 
     SplitMode currentSplitMode;
 
+    enum ZoneLayoutMode
+    {
+        Split,
+        CenterSafe,
+        CenterRed
+    }
+
+    ZoneLayoutMode currentLayoutMode;
+
+
     public int horizontalUnlockScore = 50;
 
     public GameObject rewardSuccessText;
@@ -66,6 +76,11 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI levelText;
 
     public TextMeshProUGUI safeHintText;
+
+    public Image safeZoneImage;
+    public Image redZoneImage;
+
+    bool isCenterModeShown;
 
     void Awake()
     {
@@ -91,6 +106,8 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
+        SetZoneRaycast(true);
+
         isHorizontalShown = false;
         is900LevelShown = false;
         is400LevelShown = false;
@@ -131,6 +148,8 @@ public class GameManager : MonoBehaviour
     public void GameOver()
     {
         gameRunning = false;
+
+        SetZoneRaycast(false); // 🔥 important
 
         if (score > highScore)
         {
@@ -206,33 +225,116 @@ public class GameManager : MonoBehaviour
         RandomizeZones();
     }
 
+    // void RandomizeZones()
+    // {
+    //     // Before score 50 → ONLY vertical
+    //     if (score < horizontalUnlockScore)
+    //     {
+    //         currentSplitMode = SplitMode.Vertical;
+    //     }
+    //     else
+    //     {
+    //         // After score 50 → vertical OR horizontal
+    //         if (!isHorizontalShown) {
+    //             isHorizontalShown = true;
+    //             levelText.text = "HORIZONTAL MODE UNLOCKED!"; 
+    //             levelTextObj.SetActive(true);
+    //             Invoke(nameof(HideLevelText), 2f);
+    //         }
+    //         currentSplitMode = (Random.value > 0.5f)
+    //             ? SplitMode.Vertical
+    //             : SplitMode.Horizontal;
+    //     }
+
+    //     // Randomly decide which side is SAFE
+    //     bool safeOnPrimarySide = Random.value > 0.5f;
+
+    //     SetZoneSide(safeZone, safeOnPrimarySide);
+    //     SetZoneSide(redZone, !safeOnPrimarySide);
+    // }
+
     void RandomizeZones()
     {
-        // Before score 50 → ONLY vertical
+        // -------------------------
+        // 1️⃣ Decide split mode
+        // -------------------------
         if (score < horizontalUnlockScore)
         {
             currentSplitMode = SplitMode.Vertical;
         }
         else
         {
-            // After score 50 → vertical OR horizontal
-            if (!isHorizontalShown) {
+            if (!isHorizontalShown)
+            {
                 isHorizontalShown = true;
-                levelText.text = "HORIZONTAL MODE UNLOCKED!"; 
+                levelText.text = "HORIZONTAL MODE UNLOCKED!";
                 levelTextObj.SetActive(true);
                 Invoke(nameof(HideLevelText), 2f);
             }
+
             currentSplitMode = (Random.value > 0.5f)
                 ? SplitMode.Vertical
                 : SplitMode.Horizontal;
         }
 
-        // Randomly decide which side is SAFE
-        bool safeOnPrimarySide = Random.value > 0.5f;
+        // -------------------------
+        // 2️⃣ Decide layout mode
+        // -------------------------
+        if (score < 100)
+        {
+            currentLayoutMode = ZoneLayoutMode.Split;
+        }
+        else
+        {
+            // 🔥 Center mode unlock info
+            if (score >= 100 && !isCenterModeShown)
+            {
+                isCenterModeShown = true;
 
-        SetZoneSide(safeZone, safeOnPrimarySide);
-        SetZoneSide(redZone, !safeOnPrimarySide);
+                levelText.text = "CENTER ZONE MODE UNLOCKED!";
+                levelTextObj.SetActive(true);
+                Invoke(nameof(HideLevelText), 2f);
+            }
+
+            int rand = Random.Range(0, 100);
+
+            if (rand < 60)
+                currentLayoutMode = ZoneLayoutMode.Split;       // 60%
+            else if (rand < 80)
+                currentLayoutMode = ZoneLayoutMode.CenterSafe;  // 20%
+            else
+                currentLayoutMode = ZoneLayoutMode.CenterRed;   // 20%
+        }
+
+        // -------------------------
+        // 3️⃣ Apply layout
+        // -------------------------
+        if (currentLayoutMode == ZoneLayoutMode.Split)
+        {
+            // 🔥 RESET FIRST (THIS FIXES FULL SCREEN ISSUE)
+            ResetRect(safeZone);
+            ResetRect(redZone);
+
+            bool safeOnPrimarySide = Random.value > 0.5f;
+
+            ResetRect(safeZone);
+            ResetRect(redZone);
+
+            SetZoneSide(safeZone, safeOnPrimarySide);
+            SetZoneSide(redZone, !safeOnPrimarySide);
+
+            safeHintText.text = "TOUCH HERE";
+        }
+        else if (currentLayoutMode == ZoneLayoutMode.CenterSafe)
+        {
+            ApplyCenterSafeLayout();
+        }
+        else
+        {
+            ApplyCenterRedLayout();
+        }
     }
+
 
     void SetZoneSide(RectTransform zone, bool isPrimarySide)
     {
@@ -389,6 +491,9 @@ public class GameManager : MonoBehaviour
         pauseButton.SetActive(false);  // ❌ HIDE pause
         timerBG.SetActive(false);
         rewardSuccessText.SetActive(false);
+
+        // 🔥 IMPORTANT
+        SetZoneRaycast(false);
     }
 
     public void ResumeGame()
@@ -401,6 +506,9 @@ public class GameManager : MonoBehaviour
 
         safeHintText.gameObject.SetActive(true);
         UpdateSafeZoneCountdown();
+
+        // 🔥 IMPORTANT
+        SetZoneRaycast(true);
     }
 
     public void QuitGame()
@@ -467,6 +575,72 @@ public class GameManager : MonoBehaviour
 
         // Show 1 decimal for speed feel
         safeHintText.text = $"TOUCH HERE\n{remainingTime:0.0}s";
+    }
+
+    // void ResetRect(RectTransform rect)
+    // {
+    //     rect.anchorMin = Vector2.zero;
+    //     rect.anchorMax = Vector2.one;
+    //     rect.offsetMin = Vector2.zero;
+    //     rect.offsetMax = Vector2.zero;
+    // }
+
+    void ResetRect(RectTransform rect)
+    {
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        rect.sizeDelta = Vector2.zero;
+        rect.anchoredPosition = Vector2.zero;
+    }
+
+
+    void ApplyCenterSafeLayout()
+    {
+        ResetRect(safeZone);
+        ResetRect(redZone);
+
+        // Safe in center
+        safeZone.anchorMin = safeZone.anchorMax = new Vector2(0.5f, 0.5f);
+        safeZone.sizeDelta = new Vector2(400, 400);
+        safeZone.anchoredPosition = Vector2.zero;
+
+        // Red fills background
+        redZone.anchorMin = Vector2.zero;
+        redZone.anchorMax = Vector2.one;
+
+        // 🔥 IMPORTANT: bring safe on top
+        safeZone.SetAsLastSibling();
+
+        safeHintText.text = "TOUCH CENTER!";
+    }
+
+    void ApplyCenterRedLayout()
+    {
+        ResetRect(safeZone);
+        ResetRect(redZone);
+
+        // Red in center
+        redZone.anchorMin = redZone.anchorMax = new Vector2(0.5f, 0.5f);
+        redZone.sizeDelta = new Vector2(400, 400);
+        redZone.anchoredPosition = Vector2.zero;
+
+        // Safe fills background
+        safeZone.anchorMin = Vector2.zero;
+        safeZone.anchorMax = Vector2.one;
+
+        // 🔥 IMPORTANT: bring red on top
+        redZone.SetAsLastSibling();
+
+        safeHintText.text = "AVOID CENTER!";
+    }
+
+    void SetZoneRaycast(bool enabled)
+    {
+        safeZoneImage.raycastTarget = enabled;
+        redZoneImage.raycastTarget = enabled;
     }
 
 

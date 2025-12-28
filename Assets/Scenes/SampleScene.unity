@@ -170,6 +170,8 @@ MonoBehaviour:
   levelTextObj: {fileID: 1126143925}
   levelText: {fileID: 1126143927}
   safeHintText: {fileID: 157199180}
+  safeZoneImage: {fileID: 969805005}
+  redZoneImage: {fileID: 2096850244}
 --- !u!4 &24270126
 Transform:
   m_ObjectHideFlags: 0
@@ -1791,7 +1793,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 0.035288375, g: 0.098237194, b: 0.5754717, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
