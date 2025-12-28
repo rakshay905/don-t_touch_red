@@ -208,5 +208,23 @@ public class AdsManager : MonoBehaviour
         }
     }
 
+    public void ShowContinueRewarded()
+    {
+        if (rewardedAd != null && rewardedAd.CanShowAd())
+        {
+            rewardedAd.Show(reward =>
+            {
+                // Reward granted
+                MainThreadDispatcher.RunOnMainThread(() =>
+                {
+                    GameManager.Instance.ContinueFromRewardAd();
+                });
+            });
+
+            LoadRewarded();
+        }
+    }
+
+
 
 }

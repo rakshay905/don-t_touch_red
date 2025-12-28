@@ -674,4 +674,32 @@ public class GameManager : MonoBehaviour
         rt.anchoredPosition = new Vector2(0f, -250f); // move down from top
     }
 
+    public void ContinueFromRewardAd()
+    {
+        Debug.Log("Continuing game from rewarded ad");
+
+        // Hide GameOver UI
+        gameOverPanel.SetActive(false);
+
+        // Resume state
+        gameRunning = true;
+        isPaused = false;
+
+        // Reset timer ONLY
+        tapTimer = 0f;
+        UpdateTimerBar();
+        UpdateSafeZoneCountdown();
+
+        // UI restore
+        pauseButton.SetActive(true);
+        timerBG.SetActive(true);
+        safeHintText.gameObject.SetActive(true);
+
+        // Allow clicks again
+        SetZoneRaycast(true);
+
+        // IMPORTANT: Do NOT reset score, layout, or difficulty
+    }
+
+
 }
