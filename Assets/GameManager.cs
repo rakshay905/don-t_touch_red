@@ -96,6 +96,10 @@ public class GameManager : MonoBehaviour
         Instance = this;
 
         highScore = PlayerPrefs.GetInt("HIGH_SCORE", 0);
+
+        // 🔥 HOME SCREEN INIT
+        highScoreText.text = "Best: " + FormatScore(highScore);
+        highScoreText.gameObject.SetActive(true);
     }
 
     void Update()
@@ -722,8 +726,6 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("ShowLevelMessage CALLED");
         levelText.text = message;
-
-        levelTextObj.SetActive(true);
 
         switch (type)
         {
